@@ -36,13 +36,18 @@ def parse_srv(txt: str):
 def main():
     parser = ArgumentParser(description="ArduinoBLE::BLEService parser")
     parser.add_argument("filename")
+    parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
 
     with open(args.filename) as f:
         s = f.read()
+
+    if args.verbose:
+        logger.setLevel(DEBUG)
+
     parse_srv(s)
 
 
 if __name__ == "__main__":
-    logger.setLevel(DEBUG)
+    logger.setLevel(INFO)
     main()
