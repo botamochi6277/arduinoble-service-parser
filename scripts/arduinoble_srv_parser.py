@@ -84,7 +84,7 @@ def parse_srv(txt: str):
 
 def main():
     parser = ArgumentParser(description="ArduinoBLE::BLEService parser")
-    parser.add_argument("filename")
+    parser.add_argument("filename", help="cpp/hpp/h file")
     parser.add_argument("-o", "--output", default="service.json")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
