@@ -4,6 +4,17 @@ import re
 
 from logging import getLogger, DEBUG, INFO, StreamHandler, Formatter
 
+
+from typing import NamedTuple
+
+
+class BLECharacteristic(NamedTuple):
+    name: str
+    uuid: str
+    data_type: str
+    properties: list[str]
+
+
 logger = getLogger(__file__)
 handler = StreamHandler()
 formatter = Formatter("%(levelname)s\t%(asctime)s  %(message)s", "%Y-%m-%d %H:%M:%S")
@@ -30,7 +41,31 @@ def parse_srv(txt: str):
 
     characteristics = re.findall(r"(BLE[\S]+?Characteristic) ([\S]+?);", srv_statement)
 
-    logger.debug(characteristics)
+    # logger.debug(characteristics)
+
+    r1 = f"{srv_name}::{srv_name}\(.*?\)([\s\S]+?)" + "\{"
+    constructor_succeed_txt = re.search(r1, txt)
+
+    logger.debug(constructor_succeed_txt.group())
+
+    characteristic_items: list[BLECharacteristic] = []
+
+    for chr in characteristics:
+        name = chr[1]  # todo: replace with user descriptor
+        data_type = chr[0].replace("BLE", "").replace("Characteristic", "")
+        r2 = f'{name}\("([a-fA-F0-9\-]+?)",[ \n\t]?([\s\S]+?)\)'
+        c = re.search(r2, constructor_succeed_txt.group())
+        # logger.debug(c.group(1))  # characteristic uuid
+        # logger.debug(c.group(2))  # characteristics property
+
+        properties_str = c.group(2)
+        properties_str = properties_str.replace("\t", "")
+        properties_str = properties_str.replace(" ", "")
+        properties_str = properties_str.replace("BLE", "")
+        characteristic_items.append(
+            BLECharacteristic(name, c.group(1), data_type, properties_str.split("|"))
+        )
+    logger.debug(f"characteristics: {characteristic_items}")
 
 
 def main():
