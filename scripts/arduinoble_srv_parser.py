@@ -5,7 +5,7 @@ import re
 from logging import getLogger, DEBUG, INFO, StreamHandler, Formatter
 
 
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 
 class BLECharacteristic(NamedTuple):
@@ -74,7 +74,9 @@ def parse_srv(txt: str):
     logger.debug(f"characteristics: {characteristic_items}")
 
     service = dict(
-        name=srv_name, uuid=srv_context[0], characteristics=characteristic_items
+        name=srv_name,
+        uuid=srv_context[0],
+        characteristics=[chr._asdict() for chr in characteristic_items],
     )
 
     return service
