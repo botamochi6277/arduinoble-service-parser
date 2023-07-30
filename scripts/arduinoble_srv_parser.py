@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-
+import json
 import re
 
 from logging import getLogger, DEBUG, INFO, StreamHandler, Formatter
@@ -46,7 +46,13 @@ def parse_srv(txt: str):
     r1 = f"{srv_name}::{srv_name}\(.*?\)([\s\S]+?)" + "\{"
     constructor_succeed_txt = re.search(r1, txt)
 
-    logger.debug(constructor_succeed_txt.group())
+    srv_context = re.findall(
+        r"BLEService ?\(\"([a-fA-F0-9\-]+?)\"\)", constructor_succeed_txt.group()
+    )
+    if len(srv_context) == 0:
+        logger.warning("fail to get service uuid")
+        return
+    logger.debug(f"service uuid: {srv_context[0]}")
 
     characteristic_items: list[BLECharacteristic] = []
 
@@ -67,10 +73,17 @@ def parse_srv(txt: str):
         )
     logger.debug(f"characteristics: {characteristic_items}")
 
+    service = dict(
+        name=srv_name, uuid=srv_context[0], characteristics=characteristic_items
+    )
+
+    return service
+
 
 def main():
     parser = ArgumentParser(description="ArduinoBLE::BLEService parser")
     parser.add_argument("filename")
+    parser.add_argument("-o", "--output", default="service.json")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
 
@@ -80,7 +93,11 @@ def main():
     if args.verbose:
         logger.setLevel(DEBUG)
 
-    parse_srv(s)
+    service = parse_srv(s)
+    with open(args.output, "w") as f:
+        json.dump(service, f)
+
+    logger.info(f"write {args.output}")
 
 
 if __name__ == "__main__":
